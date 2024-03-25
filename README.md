@@ -7,7 +7,7 @@ We will install ElasticSearch and Kibana into a Linux VM hosted on Hyper-V
 ### 2. Configure Ubuntu
 ### 3. Install ElasticSearch
 ### 4. Install Kibana
-### 5. Install Nginx
+### 5. Install & Configure Nginx
 ### 6. Create Role & Username
 
 ## 1. Setup Ubuntu VM
@@ -79,29 +79,169 @@ sudo apt install net-tools
 
 ## 3. Install ElasticSearch
 
-Copy ElasticSearch deb package from your computer
+Get the IP address of your VM. In our case it was 192.168.1.5
+```
+ifconfig
+```
+On your host, copy ElasticSearch deb package from your computer. Make sure that the files are in the current directory in Windows. Open a new terminal windows and enter the command
+```
+scp "elasticsearch-8.12.2-amd64.deb" ahmad@192.168.1.5:~/elasticsearch-8.12.2-amd64.deb
+```
+Enter "Yes" when prompted and then enter your Ubuntu password to continue.
 
+Start SSH session from your host to your VM.
+```
+ssh ahmad@192.168.1.5
+```
+Install ElasticSearch
+```
+sudo dpkg -i elasticsearch-8.12.2-amd64.deb
+```
+Make sure that you copy your super user password for elastic
+> The generated password for the elastic built-in superuser is : a23LUAp*Cn3GEGg3zngN
 
+Enable Elasticsearch to run as a service
+```
+sudo systemctl daemon-reload
+sudo systemctl enable elasticsearch.service
+```
+Configure Elasticsearch node for connectivity
+```
+sudo nano /etc/elasticsearch/elasticsearch.yml
+```
+And change the following settings
+```
+cluster.name: elasticsearch-demo
+network.host: 192.168.1.5
+transport.host: 0.0.0.0
+```
+Press Ctrl+O to save the file and press Enter, and then Ctrl+X to exit
 
+start the Elasticsearch service
+```
+sudo systemctl start elasticsearch.service
+```
+Make sure that Elasticsearch is running properly.
+```
+sudo curl --cacert /etc/elasticsearch/certs/http_ca.crt -u elastic:a23LUAp*Cn3GEGg3zngN https://localhost:9200
+```
+You must get a response such as
+> {
+  "name" : "ELK-VM-Test-04",
+  "cluster_name" : "elacticsearch-demo",
+  "cluster_uuid" : "fHiVnCzVQ-qMksMXZ9IpBQ",
+  "version" : {
+    "number" : "8.12.2",
+    "build_flavor" : "default",
+    "build_type" : "deb",
+    "build_hash" : "48a287ab9497e852de30327444b0809e55d46466",
+    "build_date" : "2024-02-19T10:04:32.774273190Z",
+    "build_snapshot" : false,
+    "lucene_version" : "9.9.2",
+    "minimum_wire_compatibility_version" : "7.17.0",
+    "minimum_index_compatibility_version" : "7.0.0"
+  },
+  "tagline" : "You Know, for Search"
+}
 
+Check the status of Elasticsearch:
+```
+sudo systemctl status elasticsearch
+```
 
+## 4. Install Kibana
 
+On your host, copy ElasticSearch deb package from your computer. Make sure that the files are in the current directory in Windows. Open a new terminal windows and enter the command
+```
+scp "kibana-8.12.2-amd64.deb" ahmad@192.168.1.5:~/kibana-8.12.2-amd64.deb
+```
+Install Kibana
+```
+sudo dpkg -i kibana-8.12.2-amd64.deb
+```
+Generate a Kibana enrollment token
+sudo /usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana
 
+Copy the generated enrollment token from the command output
+> eyJ2ZXIiOiI4LjEyLjIiLCJhZHIiOlsiMTkyLjE2OC4xLjU6OTIwMCJdLCJmZ3IiOiJkMDRlNDg2NGMzYzg5ZDNlMmQwMDY5Yjc3YWY2M2QxODkzOTFhM2ZmY2I0ZmIzMzkyMTdmYzM3OGE3MmM0MDk2Iiwia2V5IjoiVmtWRWRZNEJwOWlxeW9Ec29RaFk6X2ItV1FIQXVSQ2VPVkI0ekRYV1dTQSJ9
 
+enable Kibana to run as a service
+```
+sudo systemctl daemon-reload
+sudo systemctl enable kibana.service
+```
+Open the Kibana configuration file for editing
+```
+sudo nano /etc/kibana/kibana.yml
+```
+and change the following config
+```
+server.host: 192.168.1.5
+```
+Start the Kibana service
+```
+sudo systemctl start kibana.service
+```
+Get details about the Kibana service
+```
+sudo systemctl status kibana
+```
+A URL is shown, copy it with the key to get started
+http://localhost:5601/?code=579443
 
+When presented, enter the previous enrollment token
 
+Note: if you are using ssh to configure your VM and you need to copy the enrollment token to your VM, you can paste it into a text file and then copy it to your VM
+```
+scp "Desktop\token.txt" ahmad@192.168.1.5:~/token.txt
+```
+And then click on "Configure" and wait to Kibana to finish setting up
 
+When you see the Welcome to Elastic page, provide the elastic as the username and provide the elastic password
+>a23LUAp*Cn3GEGg3zngN
 
+## 5. Install & Configure Nginx
 
+Install nginx
+```
+sudo apt install nginx
+```
+Check status of nginx
+```
+systemctl status nginx
+```
+Configure your server
+```
+sudo nano /etc/nginx/sites-available/kibana
+```
+Configure as follows
 
+>server {
+    listen 8888;
+    listen [::]:8888;
 
+    server_name kibana.site;
+        
+    location / {
+        proxy_pass http://localhost:5601;
+        include proxy_params;
+    }
+}
 
+Enter Ctrl+O to save and then enter, then enter Ctrl+X to close
 
-
-
-
-
-
-
+Enable this configuration file by creating a link from it to the sites-enabled directory that Nginx reads at startup:
+```
+sudo ln -s /etc/nginx/sites-available/kibana /etc/nginx/sites-enabled/
+```
+You can now test your configuration file for syntax errors:
+```
+sudo nginx -t
+```
+With no problems reported, restart Nginx to apply your changes:
+```
+sudo systemctl restart nginx
+```
+Now you can access Kibana from remote hosts using the nginx reverse proxy URL which is http://192.168.1.5:8888
 
 
