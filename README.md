@@ -244,4 +244,68 @@ sudo systemctl restart nginx
 ```
 Now you can access Kibana from remote hosts using the nginx reverse proxy URL which is http://192.168.1.5:8888
 
+## 6. Create Role & Username
 
+- Login to Kibana
+- Stack Management
+- Security
+- Roles
+- Click on Create Role
+- Create a new role named "safee" 
+- Stack Management
+- Security
+- Users
+- Click on Create User
+- enter the name as "test" with the other details. In Privileges, select "safee" as the role.
+
+## 7. Install metricbeat
+
+Copy the installation package
+
+scp "Downloads\metricbeat-8.12.2-amd64.deb" ahmad@192.168.1.5:~/metricbeat-8.12.2-amd64.deb
+
+Install metricbeat
+
+sudo dpkg -i metricbeat-8.12.2-amd64.deb
+
+Check metricbeat modules
+
+sudo metricbeat modules list
+
+Test metricbeat
+
+sudo metricbeat test config
+
+Test output
+
+sudo metricbeat test output
+
+We got an erorr accessing elastic on http://localhost:9200
+
+To fix the error, we need to go to metericbeat configuration and add the self-signed certificate /etc/elasticsearch/certs/http_ca.crt
+
+
+
+sudo nano /etc/metricbeat/metricbeat.yml
+
+sudo systemctl restart metricbeat.service
+
+sudo metricbeat setup
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Sources
+- https://www.elastic.co/guide/en/elastic-stack/8.12/installing-stack-demo-self.html#install-stack-self-elasticsearch-first
+- https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-reverse-proxy-on-ubuntu-22-04
+- 
