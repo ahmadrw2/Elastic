@@ -3,12 +3,16 @@
 We will install ElasticSearch and Kibana into a Linux VM hosted on Hyper-V
 
 ## Table of Contents
-### 1. Setup Ubuntu VM
-### 2. Configure Ubuntu
-### 3. Install ElasticSearch
-### 4. Install Kibana
-### 5. Install & Configure Nginx
-### 6. Create Role & Username
+### 1. Setup & Configure Ubuntu VM
+### 2. Install ElasticSearch
+### 3. Install Kibana
+### 4. Install & Configure Nginx
+### 5. Create Role & Username
+### 6. Install metricbeat
+### 7. Update the "safee" role to access metric data as read only
+### 8. Install filebeat
+### 9. Update the "safee" role to access logs data as read only
+### 10. Install heartbeat
 
 ## 1. Setup Ubuntu VM
 
@@ -34,14 +38,12 @@ Start-VM -Name ELK-VM-Test-04
 - Configure hostname, username and password
 - Reboot to Ubuntu and log onto your user account
 
-## 2 Configure Ubuntu
-
-### 2.1 Connnect internet to the VM
+### 1.5 Configure Ubuntu
 From main menu, select File, then Settings, then Network Adapter, then select the Hyper-V Virtual Switch.
 
 Right click on the desktop and select "Open Terminal"
 
-Disable unattended upgrades, and select No for the first command
+Disable unattended upgrades, and select No
 ```
 sudo dpkg-reconfigure unattended-upgrades
 ```
@@ -77,7 +79,7 @@ Install net-tools to use ifconfig
 sudo apt install net-tools
 ```
 
-## 3. Install ElasticSearch
+## 2. Install ElasticSearch
 
 Get the IP address of your VM. In our case it was 192.168.1.5
 ```
@@ -149,7 +151,7 @@ Check the status of Elasticsearch:
 sudo systemctl status elasticsearch
 ```
 
-## 4. Install Kibana
+## 3. Install Kibana
 
 On your host, copy ElasticSearch deb package from your computer. Make sure that the files are in the current directory in Windows. Open a new terminal windows and enter the command
 ```
@@ -200,7 +202,7 @@ And then click on "Configure" and wait to Kibana to finish setting up
 When you see the Welcome to Elastic page, provide the elastic as the username and provide the elastic password
 >a23LUAp*Cn3GEGg3zngN
 
-## 5. Install & Configure Nginx
+## 4. Install & Configure Nginx
 
 Install nginx
 ```
@@ -244,7 +246,7 @@ sudo systemctl restart nginx
 ```
 Now you can access Kibana from remote hosts using the nginx reverse proxy URL which is http://192.168.1.5:8888
 
-## 6. Create Role & Username
+## 5. Create Role & Username
 
 - Login to Kibana
 - Stack Management
@@ -258,7 +260,7 @@ Now you can access Kibana from remote hosts using the nginx reverse proxy URL wh
 - Click on Create User
 - enter the name as "test" with the other details. In Privileges, select "safee" as the role.
 
-## 7. Install metricbeat
+## 6. Install metricbeat
 
 Copy the installation package
 ```
@@ -287,12 +289,12 @@ To fix the error, we need to go to metericbeat configuration and add the followi
 sudo nano /etc/metricbeat/metricbeat.yml
 ```
 Edit the configuration file as follows
-
->protocol: "https"
+```
+protocol: "https"
 username: "elastic"
 password: "a23LUAp*Cn3GEGg3zngN"
 ssl_certificate_authorities: ["/etc/elasticsearch/certs/http_ca.crt"]
-
+```
 Restart metricbeat service
 ```
 sudo systemctl restart metricbeat.service
@@ -309,8 +311,21 @@ Enable metericbeat service
 ```
 sudo systemctl enable metricbeat.service
 ```
+## 7. Update the "safee" role to access metric data as read only
 
-## 7. Install filebeat
+- Open Kibana home page
+- Stack Management
+- Security
+- Roles
+- Edit "safee" role
+- Add Kibana privileges
+- In spaces select "All Spaces"
+- In Privileges for all features, select "Customize"
+- In Observability, Metrics, select "read"
+- Click on "Create Global Privileges"
+- Click on "Update Role"
+
+## 8. Install filebeat
 
 Copy the installation package
 ```
@@ -344,12 +359,12 @@ To fix the error, we need to go to filebeat configuration and add the following 
 sudo nano /etc/filebeat/filebeat.yml
 ```
 Edit the configuration file as follows
-
->protocol: "https"
+```
+protocol: "https"
 username: "elastic"
 password: "a23LUAp*Cn3GEGg3zngN"
 ssl.certificate_authorities: ["/etc/elasticsearch/certs/http_ca.crt"]
-
+```
 Restart filebeat service
 ```
 sudo systemctl restart filebeat.service
@@ -367,18 +382,76 @@ Enable filebeat service
 sudo systemctl enable filebeat.service
 ```
 
+## 9. Update the "safee" role to access log data as read only
 
+- Open Kibana home page
+- Stack Management
+- Security
+- Roles
+- Edit "safee" role
+- Update Custom Privileges
+- In Observability, Logs, select "read"
+- Click on "Update Global Privileges"
+- Click on "Update Role"
 
+## 10. Install heartbeat
 
+Copy the installation package
+```
+scp "Downloads\heartbeat-8.12.2-amd64.deb" ahmad@192.168.201.5:~/heartbeat-8.12.2-amd64.deb
+```
+Install heartbeat
+```
+sudo dpkg -i heartbeat-8.12.2-amd64.deb
+```
+Go to heartbeat configuration and add the following configuration
+```
+sudo nano /etc/heartbeat/heartbeat.yml
+```
+Edit the configuration file as follows
+```
+protocol: "https"
+username: "elastic"
+password: "a23LUAp*Cn3GEGg3zngN"
+ssl.certificate_authorities: ["/etc/elasticsearch/certs/http_ca.crt"]
+```
+Configure heartbeat monitors
+```
+sudo nano /etc/heartbeat/heartbeat.yml
+```
+Enter the following configuration
+```
+heartbeat.monitors:
+- type: http
+  enabled: true
+  id: my-monitor
+  name: My Monitor
+  urls: ["https://localhost:9200", "http://localhost:5601"]
+  schedule: '@every 10s'
+```
+Save the configuration Ctrl+O and press Enter, then Ctrl+X to exit
 
-
-
-
-
-
+Test heartbeat config
+```
+sudo heartbeat test config
+```
+Setup heartbeat
+```
+sudo heartbeat setup
+```
+Start Heartbeat
+```
+sudo systemctl start heartbeat-elastic
+sudo systemctl enable heartbeat-elastic
+```
+Go to the following URL
+```
+http://192.168.101.166:8888/app/uptime
+```
+Done
 
 
 ### Sources
 - https://www.elastic.co/guide/en/elastic-stack/8.12/installing-stack-demo-self.html#install-stack-self-elasticsearch-first
 - https://www.digitalocean.com/community/tutorials/how-to-configure-nginx-as-a-reverse-proxy-on-ubuntu-22-04
-- 
+- https://www.elastic.co/guide/en/beats/heartbeat/current/heartbeat-installation-configuration.html
