@@ -174,9 +174,9 @@ Open the Kibana configuration file for editing
 ```
 sudo nano /etc/kibana/kibana.yml
 ```
-and change the following config
+and make sure that the following config is set to localhost
 ```
-server.host: 192.168.1.5
+elasticsearch.hosts: ["https://localhost:9200"]
 ```
 Start the Kibana service
 ```
@@ -282,17 +282,30 @@ sudo metricbeat test output
 
 We got an erorr accessing elastic on http://localhost:9200
 
-To fix the error, we need to go to metericbeat configuration and add the self-signed certificate /etc/elasticsearch/certs/http_ca.crt
-
-
+To fix the error, we need to go to metericbeat configuration and add the following configuration
 
 sudo nano /etc/metricbeat/metricbeat.yml
 
+protocol: "https"
+username: "elastic"
+password: "a23LUAp*Cn3GEGg3zngN"
+ssl_certificate_authorities: ["/etc/elasticsearch/certs/http_ca.crt"]
+
+Restart metricbeat service
+
 sudo systemctl restart metricbeat.service
+
+Test again to see if all is working
+
+sudo metricbeat test output
+
+Setup metricbeat
 
 sudo metricbeat setup
 
+Enable metericbeat service
 
+sudo systemctl enable metricbeat.service
 
 
 
