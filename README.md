@@ -261,51 +261,111 @@ Now you can access Kibana from remote hosts using the nginx reverse proxy URL wh
 ## 7. Install metricbeat
 
 Copy the installation package
-
+```
 scp "Downloads\metricbeat-8.12.2-amd64.deb" ahmad@192.168.1.5:~/metricbeat-8.12.2-amd64.deb
-
+```
 Install metricbeat
-
+```
 sudo dpkg -i metricbeat-8.12.2-amd64.deb
-
+```
 Check metricbeat modules
-
+```
 sudo metricbeat modules list
-
+```
 Test metricbeat
-
+```
 sudo metricbeat test config
-
+```
 Test output
-
+```
 sudo metricbeat test output
-
+```
 We got an erorr accessing elastic on http://localhost:9200
 
 To fix the error, we need to go to metericbeat configuration and add the following configuration
-
+```
 sudo nano /etc/metricbeat/metricbeat.yml
+```
+Edit the configuration file as follows
 
-protocol: "https"
+>protocol: "https"
 username: "elastic"
 password: "a23LUAp*Cn3GEGg3zngN"
 ssl_certificate_authorities: ["/etc/elasticsearch/certs/http_ca.crt"]
 
 Restart metricbeat service
-
+```
 sudo systemctl restart metricbeat.service
-
+```
 Test again to see if all is working
-
+```
 sudo metricbeat test output
-
-Setup metricbeat
-
+```
+Setup metricbeat and add it dashboard to Kibana
+```
 sudo metricbeat setup
-
+```
 Enable metericbeat service
-
+```
 sudo systemctl enable metricbeat.service
+```
+
+## 7. Install filebeat
+
+Copy the installation package
+```
+scp "Downloads\filebeat-8.12.2-amd64.deb" ahmad@192.168.201.5:~/filebeat-8.12.2-amd64.deb
+```
+Install filebeat
+```
+sudo dpkg -i filebeat-8.12.2-amd64.deb
+```
+Check filebeat modules
+```
+sudo filebeat modules list
+```
+Enable required modules
+```
+sudo filebeat modules enable system
+sudo filebeat modules enable auditd
+```
+Test filebeat
+```
+sudo filebeat test config
+```
+Test output
+```
+sudo filebeat test output
+```
+We got an erorr accessing elastic on http://localhost:9200
+
+To fix the error, we need to go to filebeat configuration and add the following configuration
+```
+sudo nano /etc/filebeat/filebeat.yml
+```
+Edit the configuration file as follows
+
+>protocol: "https"
+username: "elastic"
+password: "a23LUAp*Cn3GEGg3zngN"
+ssl.certificate_authorities: ["/etc/elasticsearch/certs/http_ca.crt"]
+
+Restart filebeat service
+```
+sudo systemctl restart filebeat.service
+```
+Test again to see if all is working
+```
+sudo filebeat test output
+```
+Setup filebeat and add it dashboard to Kibana
+```
+sudo filebeat setup
+```
+Enable filebeat service
+```
+sudo systemctl enable filebeat.service
+```
 
 
 
