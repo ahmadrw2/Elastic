@@ -18,6 +18,9 @@ Disable unattended-upgrades, select No after running the following command
 ```
 sudo dpkg-reconfigure unattended-upgrades
 ```
+
+## Install Docker
+
 Uninstall old versions of docker
 ```
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
@@ -97,6 +100,9 @@ To view system-wide information about Docker
 ```
 docker info
 ```
+
+## Run ElasticSearch
+
 Create a new docker network.
 ```
 docker network create elastic
@@ -137,6 +143,7 @@ Test if elastic is bind correctly
 ```
 docker ps
 ```
+
 ## Run Kibana
 
 Get Kibana image.
@@ -187,6 +194,7 @@ Then use the IP addresses you got from inspecting the container configuration fo
 172.18.0.2      elastic
 172.18.0.3      kibana
 ```
+
 Create the configuration file for heartbeat
 ```
 nano heartbeat.yml
