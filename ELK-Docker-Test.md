@@ -44,8 +44,7 @@ Install the latest version of docker
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-
-Manage Docker as a non-root user, add your user to the docker group.
+Tp manage Docker as a non-root user, add your user to the docker group.
 ```
 sudo usermod -aG docker $USER
 ```
@@ -59,8 +58,15 @@ groups
 ```
 Verify that the Docker Engine installation is successful by running the hello-world image.
 ```
-sudo docker run hello-world
+docker run hello-world
 ```
+
+Remove the test container as we won't be needing it
+```
+docker stop hello-world
+docker rm hello-world
+```
+
 If you have images stored on another machine, you can export them from there and import them in our current machine
 ```
 docker save -o elastic.tar <image name>
@@ -81,7 +87,7 @@ Test if images are imported properly
 ```
 docker images
 ```
-If you want to download images directly from docker hub
+Or if you want to download images directly from docker hub
 ```
 docker pull docker.elastic.co/elasticsearch/elasticsearch:8.13.0-amd64
 docker pull docker.elastic.co/kibana/kibana:8.13.0-amd64
@@ -91,11 +97,6 @@ To view system-wide information about Docker
 ```
 docker info
 ```
-Create a new docker network.
-```
-docker network create elastic
-```
-
 Create a new docker network.
 ```
 docker network create elastic
@@ -132,6 +133,10 @@ Get Elastic IP Address
 docker inspect es01
 ```
 
+Test if elastic is bind correctly
+```
+docker ps
+```
 ## Run Kibana
 
 Get Kibana image.
@@ -147,6 +152,16 @@ docker run --name kib01 --net elastic -p 5601:5601 docker.elastic.co/kibana/kiba
 Get Kibana IP Address
 ```
 docker inspect kib01
+```
+
+Test if kibana is bind correctly
+```
+docker ps
+```
+
+Go to kibana url, enter the enrollment token. Then use elastic username and password to login
+```
+http://172.18.0.:5601
 ```
 
 ## Run Heartbeat
@@ -217,17 +232,17 @@ docker run -d \
 
 Enter the shell of the heartbeat container
 ```
-
+docker exec -it heartbeat bash
 ```
 
-Test the config of heartbeat
+When inside the shell of the container, test the config of heartbeat
 ```
-
+heartbeat test config
 ```
 
 Setup heartbeat
 ```
-
+heartbeat setup
 ```
 
 Now login to kibana using http://178.28.0.3:5601 and enter username and password
@@ -235,23 +250,8 @@ Now login to kibana using http://178.28.0.3:5601 and enter username and password
 Go to Uptime and check the heartbeat of the configured monitors
 
 
-
-
-
-
-
-
+## Sources
 https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
-
-Sources
 https://docs.docker.com/engine/install/ubuntu/
 https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-20-04
 https://computingforgeeks.com/how-to-export-and-import-docker-images-containers/
-
-
-
-
-
-
-
-
