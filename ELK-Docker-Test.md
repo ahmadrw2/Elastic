@@ -257,6 +257,19 @@ Now login to kibana using http://178.28.0.3:5601 and enter username and password
 
 Go to Uptime and check the heartbeat of the configured monitors
 
+## Notes
+You might encounter some error such as
+
+### Elastic won't run because of vm.max_map_count
+Run the following command on the host running docker
+```
+sudo sysctl -w vm.max_map_count=262144
+```
+### Heartbeat won't run "heartbeat test config" or "heartbeat setup"
+Run the following command on the heartbeat container itself
+```
+chown
+```
 
 ## Sources
 https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
